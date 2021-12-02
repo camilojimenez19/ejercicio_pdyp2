@@ -1,0 +1,30 @@
+<nav class="col-md-2 d-none d-md-block bg-light sidebar">
+    <div class="sidebar-sticky">
+        <ul class="nav flex-column">
+            <li class="nav-item">
+                <a class="nav-link {{#if esPaginaEmpleado }} active{{/if}}" href="/">
+                    <span data-feather="users"></span>
+                    Empleados
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link {{#if esPaginaSalon }} active{{/if}}" href="/salones">
+                    <span data-feather="home"></span>
+                    Salones
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link {{#if esPaginaArea }} active{{/if}}" href="/areas">
+                    <span data-feather="layers"></span>
+                    Areas
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link {{#if esPaginaReportes }} active{{/if}}" href="/reportes">
+                    <span data-feather="bar-chart-2"></span>
+                    Reportes
+                </a>
+            </li>
+        </ul>
+    </div>
+</nav>

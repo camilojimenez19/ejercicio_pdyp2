@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  {{> head }}
+</head>
+
+<body>
+  {{> navbar }}
+
+  <div class="container-fluid">
+    <div class="row">
+      {{> sidebar }}
+
+      <main role="main" class="col-md-9 ml-sm-auto col-lg-10 pt-3 px-4">
+        <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pb-2 mb-3 border-bottom">
+          <h1 class="h2">Areas</h1>
+          <a class="btn btn-light" data-toggle="modal" data-target="#crearEmpleado">Agregar</a>
+        </div>
+        <br>
+        <div class="table-responsive">
+          <table class="table table-striped table-sm" id="tablaEmpleados">
+            <thead>
+              <tr>
+                <th>Nombre</th>
+                <th>Opcion</th>
+              </tr>
+            </thead>
+          </table>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  {{> scripts }}
+  <script>
+    $(document).ready(async () => {
+
+      const data = await new Promise((resolve, reject) => {
+        $.ajax({
+          type: 'GET',
+          url: '/api/area',
+          success: function (response) {
+            if (response.total == 0) {
+              Swal.fire({
+                icon: 'error',
+                title: 'Oops...',
+                text: 'No hay areas registradas'
+              })
+              reject([])
+            }
+
+            const { areas } = response
+
+            areas.forEach((area) => {
+              const buttons = `
+                <a href="#" class="btn btn-danger deleteButton" data-id="${area.uid}"><i class="fa fa-trash"></i></a>
+              `
+              area.botones = buttons
+            })
+
+            resolve(areas)
+          }
+        })
+      })
+
+      const configTable = {
+        data,
+        columns: [
+          { data: 'nombre' },
+          { data: 'botones' },
+        ]
+      }
+      $('#tablaEmpleados').DataTable(configTable);
+    })
+
+  </script>
+</body>
+
+</html>

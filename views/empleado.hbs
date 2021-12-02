@@ -1,0 +1,241 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  {{> head }}
+</head>
+
+<body>
+  {{> navbar }}
+
+  <div class="container-fluid">
+    <div class="row">
+      {{> sidebar }}
+
+      <main role="main" class="col-md-9 ml-sm-auto col-lg-10 pt-3 px-4">
+        <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pb-2 mb-3 border-bottom">
+          <h1 class="h2">Empleados</h1>
+          <a class="btn btn-light" data-toggle="modal" data-target="#crearEmpleado">Agregar</a>
+        </div>
+        <br>
+        <div class="table-responsive">
+          <table class="table table-striped table-sm" id="tablaEmpleados">
+            <thead>
+              <tr>
+                <th>Cedula</th>
+                <th>Nombre</th>
+                <th>Correo</th>
+                <th>Clasificacion</th>
+                <th>Tipo</th>
+                <th>Opcion</th>
+              </tr>
+            </thead>
+          </table>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <div class="modal fade" id="crearEmpleado" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Crear Empleado</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <form id="formActualizar">
+          <div class="modal-body">
+            <div class="form-group">
+              <label for="cedula">Cedula</label>
+              <input type="text" class="form-control" id="cedula" name="cedula" placeholder="Ingresa cedula" required>
+            </div>
+            <div class="form-group">
+              <label for="nombre">Nombre</label>
+              <input type="text" class="form-control" id="nombre" name="nombre" placeholder="Ingresa nombre" required>
+            </div>
+            <div class="form-group">
+              <label for="correo">Correo Electronico</label>
+              <input type="email" class="form-control" id="correo" name="correo" placeholder="name@example.com"
+                required>
+            </div>
+
+            <div class="form-group">
+              <label for="clasificacion">Clasificacion del empleado</label>
+              <select class="form-control" id="clasificacion" name="clasificacion" required>
+                <option value="PROFESOR">Profesor</option>
+                <option value="ADMINISTRATIVO">Administrativo</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="tipo">Tipo de empleado</label>
+              <select class="form-control" id="tipo" name="tipo" required>
+                <option value="PLANTA">Planta</option>
+                <option value="CONTRATISTA">Contratista</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="area">Area asignada</label>
+              <select class="form-control" id="area" name="areaId" required>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="salon">Salon asignado</label>
+              <select class="form-control" id="salon" name="salonId" required>
+              </select>
+            </div>
+
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-light" data-dismiss="modal">Cerrar</button>
+            <button type="submit" class="btn btn-primary">Crear</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  {{> scripts }}
+  <script>
+    $(document).ready(async () => {
+
+      const data = await new Promise((resolve, reject) => {
+        $.ajax({
+          type: 'GET',
+          url: '/api/empleado',
+          success: function (response) {
+            if (response.total == 0) {
+              Swal.fire({
+                icon: 'error',
+                title: 'Oops...',
+                text: 'No hay empleados registrados'
+              })
+              reject([])
+            }
+
+            const { empleados } = response
+
+            empleados.forEach((empleado) => {
+              const buttons = `
+                <a href="#" class="btn btn-danger deleteButton" data-id="${empleado.uid}"><i class="fa fa-trash"></i></a>
+              `
+              empleado.botones = buttons
+            })
+
+            resolve(empleados)
+          }
+        })
+      })
+
+      const configTable = {
+        data,
+        columns: [
+          { data: 'cedula' },
+          { data: 'nombre' },
+          { data: 'correo' },
+          { data: 'clasificacion' },
+          { data: 'tipo' },
+          { data: 'botones' },
+        ]
+      }
+      $('#tablaEmpleados').DataTable(configTable);
+
+      /** Eventos */
+      $('.deleteButton').click(function () {
+        const dataId = $(this).attr('data-id')
+
+        Swal.fire({
+          title: 'Estas seguro de eliminar?',
+          text: "Despues no puedes recuperar esta registro!",
+          icon: 'warning',
+          showCancelButton: true,
+          confirmButtonColor: '#3085d6',
+          cancelButtonColor: '#d33',
+          confirmButtonText: 'Si, eliminalo!'
+        }).then((result) => {
+          if (result.isConfirmed) {
+
+            $.ajax({
+              type: 'DELETE',
+              url: `/api/empleado/${dataId}`,
+              success: function (response) {
+
+                Swal.fire(
+                  'Eliminado!',
+                  'El empleado ha sido eliminado!.',
+                  'success'
+                )
+                setTimeout(() => {
+                  window.location = '/'
+                }, 2000)
+
+              }
+            })
+          }
+        })
+      });
+
+      $('#crearEmpleado').on('shown.bs.modal', async function () {
+
+        $('#salon').empty()
+        $('#area').empty()
+        const [salones, areas] = await Promise.all([
+          obtenerSalones(),
+          obtenerAreas()
+        ])
+
+        console.log(salones)
+        console.log(areas)
+
+        salones.forEach((salon) => {
+          $('#salon').append(`<option value="${salon.uid}">${salon.codigo}</option>`)
+        })
+        areas.forEach((area) => {
+          $('#area').append(`<option value="${area.uid}">${area.nombre}</option>`)
+        })
+      })
+
+      $('#formActualizar').on('submit', function (e) {
+        e.preventDefault()
+
+        const data = $(this).serialize();
+
+        $.ajax({
+          type: 'POST',
+          data: data,
+          url: '/api/empleado?' + data,
+          dataType: 'JSON'
+        }).done(function (response) {
+          Swal.fire(
+            'Creado!',
+            response.message,
+            'success',
+          )
+          setTimeout(() => {
+            window.location = '/'
+          }, 2000)
+        }).fail((data) => {
+          const { errors } = data.responseJSON
+          Swal.fire('Opss...', errors[0].msg, 'error' )
+        })
+      })
+    })
+
+    async function obtenerSalones() {
+      const { salones } = await $.ajax('/api/salon')
+      return salones
+    }
+
+    async function obtenerAreas() {
+      const { areas } = await $.ajax('/api/area')
+      return areas
+    }
+
+  </script>
+</body>
+
+</html>
